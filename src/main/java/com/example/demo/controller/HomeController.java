@@ -6,10 +6,18 @@ import com.example.demo.entity.Facture;
 import com.example.demo.service.impl.ClientServiceImpl;
 import com.example.demo.service.ArticleService;
 import com.example.demo.service.FactureService;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.*;
 import java.util.List;
 
 /**
@@ -42,5 +50,87 @@ public class HomeController {
         modelAndView.addObject("factures", factures);
 
         return modelAndView;
+    }
+
+    // Export tous les articles en csv
+    @GetMapping("/articles/csv")
+    public void articlesCSV(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("text/csv");
+        response.setHeader("Content-Disposition", "attachement: filename\"export-article.csv\"");
+
+        PrintWriter writer = response.getWriter();
+        List<Article>articles = articleService.findAll();
+        String header = "Libelle;Prix";
+        writer.println(header);
+        for (Article article : articles) {
+            String line = article.getLibelle() + ";" + article.getPrix();
+            writer.println(line);
+        }
+
+        writer.println();
+    }
+
+    // Export tous les clients en CVS en ajoutant une nouvelle colonne : age du client
+    @GetMapping("/clients/csv")
+    public void clientsCSV(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("text/csv");
+        response.setHeader("Content-Disposition", "attachement: file\"export-client.csv\"");
+
+        PrintWriter writer = response.getWriter();
+        List<Client> clients = clientServiceImpl.findAllClients();
+        String header = "Nom;Prénom;Age";
+        writer.println(header);
+        for (Client client : clients) {
+            String line = client.getNom() + ";" + client.getPrenom() + ";" + client.getAge();
+            writer.println(line);
+        }
+    }
+
+    // Export tous les clients en XLXS en ajoutant une nouvelle colonne : age du client
+    @GetMapping("clients/xlsx")
+    public void clientsXLSX(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("text/xlsx");
+        response.setHeader("Content-Disposition", "attachement: file\"export-client.xlsx\"");
+
+        String[] columns = {"Name", "Prénom", "Age"};
+
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("Clients");
+        Row headerRow = sheet.createRow(0);
+        // header
+        for(int i = 0; i < columns.length; i++) {
+            Cell cell = headerRow.createCell(i);
+            cell.setCellValue(columns[i]);
+        }
+
+        int rowNum = 1;
+        List<Client> clients = clientServiceImpl.findAllClients();
+        for(Client client: clients) {
+            Row row = sheet.createRow(rowNum++);
+            row.createCell(0).setCellValue(client.getPrenom());
+            row.createCell(1).setCellValue(client.getNom());
+            row.createCell(2).setCellValue(client.getAge());
+        }
+
+        // Resize all columns to fit the content size
+        for(int i = 0; i < columns.length; i++) {
+            sheet.autoSizeColumn(i);
+        }
+
+        FileOutputStream fileOutputStream = new FileOutputStream("clients.xlsx");
+        workbook.write(fileOutputStream);
+        fileOutputStream.close();
+        workbook.close();
+    }
+
+    // Export factures par Client
+    @GetMapping("clients/{idClient}/factures/xlsx")
+    public void facturesClientsXLSX(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            @PathVariable(value = "idClient") Long idClient
+    ) {
+        Client client = clientServiceImpl.findClient(idClient);
+
     }
 }

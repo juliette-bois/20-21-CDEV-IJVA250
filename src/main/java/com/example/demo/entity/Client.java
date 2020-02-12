@@ -2,6 +2,7 @@ package com.example.demo.entity;
 
 import javax.persistence.*;
 import java.time.LocalDate;
+import java.util.Set;
 
 /**
  * Entity représentant un client.
@@ -12,6 +13,9 @@ public class Client {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
+
+    @OneToMany(mappedBy = "client")
+    private Set<Facture> factures;
 
     @Column(nullable = false)
     private String prenom;
@@ -54,4 +58,16 @@ public class Client {
         this.dateNaissance = dateNaissance;
     }
 
+    public Set<Facture> getFactures() {
+        return factures;
+    }
+
+    // convert date de naissance to age
+    public Integer getAge() {
+        LocalDate dateBirthday = this.getDateNaissance();
+        LocalDate today = LocalDate.now();
+        Integer yearBirthday = dateBirthday.getYear();
+        Integer year = today.getYear();
+        return year - yearBirthday;
+    }
 }

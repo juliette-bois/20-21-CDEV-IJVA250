@@ -25,4 +25,8 @@ public class ClientServiceImpl implements ClientService {
     public List<Client> findAllClients() {
         return clientRepository.findAll();
     }
+
+    public Client findClient(Long id) {
+        return clientRepository.findById(id).get();
+    }
 }
