@@ -26,6 +26,10 @@ import java.util.List;
 @Controller
 public class HomeController {
 
+    private static final int COL_SURNAME = 0;
+    private static final int COL_FIRSTNAME = 1;
+    private static final int COL_AGE = 2;
+
     private ArticleService articleService;
     private ClientServiceImpl clientServiceImpl;
     private FactureService factureService;
@@ -97,6 +101,7 @@ public class HomeController {
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("Clients");
         Row headerRow = sheet.createRow(0);
+
         // header
         for(int i = 0; i < columns.length; i++) {
             Cell cell = headerRow.createCell(i);
@@ -107,10 +112,13 @@ public class HomeController {
         List<Client> clients = clientServiceImpl.findAllClients();
         for(Client client: clients) {
             Row row = sheet.createRow(rowNum++);
-            row.createCell(0).setCellValue(client.getPrenom());
-            row.createCell(1).setCellValue(client.getNom());
-            row.createCell(2).setCellValue(client.getAge());
+            row.createCell(COL_SURNAME).setCellValue(client.getPrenom());
+            row.createCell(COL_FIRSTNAME).setCellValue(client.getNom());
+            row.createCell(COL_AGE).setCellValue(client.getAge());
         }
+
+        CellStyle cell = workbook.createCellStyle();
+        Font font = workbook.createFont();
 
         // Resize all columns to fit the content size
         for(int i = 0; i < columns.length; i++) {
